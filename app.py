@@ -483,6 +483,7 @@ def main():
 
         cols = st.columns(min(int(num_players), 6))
 
+        selected_player = None
         for i in range(int(num_players)):
             with cols[i % 6]:
                 if st.button(
@@ -491,39 +492,39 @@ def main():
                     use_container_width=True,
                     type="primary"
                 ):
-                    # 경로 추적
-                    path, end_col = game.trace_path(i)
-                    result = game.prizes[end_col]
+                    selected_player = i
 
-                    # 결과 표시 영역
-                    st.markdown("---")
-                    st.subheader(f"🎯 {player_names[i]}님의 결과")
-
-                    # 애니메이션 실행
-                    ladder_container = st.empty()
-
-                    # 단계별 애니메이션
-                    for step in range(len(path) + 1):
-                        current_path = path[:step]
-                        current_pos = path[step - 1] if step > 0 else None
-
-                        # HTML 사다리 렌더링
-                        ladder_html = draw_ladder_html(game, current_path, current_pos)
-
-                        # 사다리 컨테이너에 출력
-                        ladder_container.markdown(ladder_html, unsafe_allow_html=True)
-
-                        if step < len(path):
-                            time.sleep(0.2)  # 애니메이션 속도 조절
-
-                    # 최종 결과 표시
-                    st.success(f"## 🎊 결과: **{result}**")
-
-        # 사다리 표시
+        # 전체 사다리 표시
         st.markdown("---")
         st.subheader("🪜 사다리")
-        ladder_html = draw_ladder_html(game)
-        st.markdown(ladder_html, unsafe_allow_html=True)
+        ladder_container = st.empty()
+
+        # 선택된 참가자가 있으면 애니메이션 실행
+        if selected_player is not None:
+            # 경로 추적
+            path, end_col = game.trace_path(selected_player)
+            result = game.prizes[end_col]
+
+            # 애니메이션 실행 (전체 사다리 위에)
+            for step in range(len(path) + 1):
+                current_path = path[:step]
+                current_pos = path[step - 1] if step > 0 else None
+
+                # HTML 사다리 렌더링
+                ladder_html = draw_ladder_html(game, current_path, current_pos)
+
+                # 사다리 컨테이너에 출력
+                ladder_container.markdown(ladder_html, unsafe_allow_html=True)
+
+                if step < len(path):
+                    time.sleep(0.2)  # 애니메이션 속도 조절
+
+            # 최종 결과 표시
+            st.success(f"🎊 {player_names[selected_player]}님의 결과: **{result}**")
+        else:
+            # 기본 사다리 표시
+            ladder_html = draw_ladder_html(game)
+            ladder_container.markdown(ladder_html, unsafe_allow_html=True)
 
 
 if __name__ == "__main__":
