@@ -11,25 +11,182 @@ st.set_page_config(
     layout="wide"
 )
 
+# CSS 스타일 정의
+def get_ladder_css():
+    """사다리 시각화를 위한 CSS 스타일 반환"""
+    return """
+    <style>
+    /* 사다리 컨테이너 스타일 */
+    .ladder-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 30px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        margin: 20px auto;
+    }
+
+    /* 참가자 이름 영역 */
+    .ladder-names {
+        display: flex;
+        justify-content: space-around;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+
+    .ladder-name {
+        font-size: 16px;
+        font-weight: bold;
+        color: #ffffff;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        text-align: center;
+        padding: 10px 15px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+    }
+
+    .ladder-name.highlight {
+        background: rgba(255, 215, 0, 0.8);
+        color: #000;
+        transform: scale(1.1);
+        box-shadow: 0 5px 15px rgba(255, 215, 0, 0.5);
+    }
+
+    /* 사다리 본체 영역 */
+    .ladder-body {
+        display: flex;
+        justify-content: space-around;
+        position: relative;
+        width: 100%;
+        min-height: 400px;
+    }
+
+    /* 세로 라인 */
+    .ladder-vertical {
+        position: relative;
+        width: 4px;
+        background: linear-gradient(180deg, #fff 0%, #e0e0e0 100%);
+        border-radius: 2px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .ladder-vertical.highlight {
+        background: linear-gradient(180deg, #ffd700 0%, #ffed4e 100%);
+        width: 6px;
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+        animation: pulse 0.5s ease-in-out;
+    }
+
+    /* 가로 라인 */
+    .ladder-rung {
+        position: absolute;
+        height: 4px;
+        background: linear-gradient(90deg, #fff 0%, #e0e0e0 50%, #fff 100%);
+        border-radius: 2px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .ladder-rung.highlight {
+        background: linear-gradient(90deg, #ffd700 0%, #ffed4e 50%, #ffd700 100%);
+        height: 6px;
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+        animation: glow 0.5s ease-in-out;
+    }
+
+    /* 이동 포인트 (공) */
+    .ladder-ball {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        background: radial-gradient(circle at 30% 30%, #ffd700, #ff6b6b);
+        border-radius: 50%;
+        box-shadow: 0 0 20px rgba(255, 107, 107, 0.8);
+        transform: translate(-50%, -50%);
+        animation: bounce 0.3s ease-in-out;
+        z-index: 10;
+    }
+
+    /* 상품 영역 */
+    .ladder-prizes {
+        display: flex;
+        justify-content: space-around;
+        width: 100%;
+        margin-top: 20px;
+    }
+
+    .ladder-prize {
+        font-size: 16px;
+        font-weight: bold;
+        color: #ffffff;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        text-align: center;
+        padding: 10px 15px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+    }
+
+    .ladder-prize.highlight {
+        background: rgba(255, 107, 107, 0.8);
+        color: #fff;
+        transform: scale(1.2);
+        box-shadow: 0 5px 20px rgba(255, 107, 107, 0.6);
+        animation: tada 0.5s ease-in-out;
+    }
+
+    /* 애니메이션 정의 */
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+
+    @keyframes glow {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+
+    @keyframes bounce {
+        0%, 100% { transform: translate(-50%, -50%) scale(1); }
+        50% { transform: translate(-50%, -50%) scale(1.3); }
+    }
+
+    @keyframes tada {
+        0% { transform: scale(1) rotate(0deg); }
+        10%, 20% { transform: scale(0.9) rotate(-3deg); }
+        30%, 50%, 70%, 90% { transform: scale(1.1) rotate(3deg); }
+        40%, 60%, 80% { transform: scale(1.1) rotate(-3deg); }
+        100% { transform: scale(1) rotate(0deg); }
+    }
+    </style>
+    """
+
 # 세션 상태 초기화
 if 'ladder_generated' not in st.session_state:
-    st.session_state.ladder_generated = False
+    st.session_state.ladder_generated = False  # 사다리 생성 여부
 if 'ladder_data' not in st.session_state:
-    st.session_state.ladder_data = None
+    st.session_state.ladder_data = None  # 사다리 게임 데이터
 if 'animation_running' not in st.session_state:
-    st.session_state.animation_running = False
+    st.session_state.animation_running = False  # 애니메이션 실행 상태
 
 
 class LadderGame:
-    """사다리타기 게임 클래스"""
+    """사다리타기 게임 클래스 - 사다리 생성 및 경로 추적 기능 제공"""
 
     def __init__(self, num_players: int, player_names: List[str], prizes: List[str], num_rungs: int = 15):
         """
-        Args:
+        사다리타기 게임 초기화
+
+        매개변수:
             num_players: 참가자 수
             player_names: 참가자 이름 리스트
-            prizes: 상품 리스트
-            num_rungs: 가로줄(rung) 수
+            prizes: 상품(결과) 리스트
+            num_rungs: 사다리 가로줄 개수 (기본값: 15)
         """
         self.num_players = num_players
         self.player_names = player_names
@@ -39,21 +196,22 @@ class LadderGame:
 
     def _generate_ladder(self) -> List[List[bool]]:
         """
-        사다리 가로줄을 랜덤으로 생성
+        사다리의 가로줄을 랜덤으로 생성
 
-        Returns:
-            ladder[row][col]: row번째 높이에서 col번째와 col+1번째 세로줄 사이에 가로줄이 있는지
+        반환값:
+            ladder[row][col]: row번째 높이에서 col번째와 col+1번째 세로줄 사이에
+                              가로줄이 있는지 여부를 나타내는 2차원 불린 배열
         """
         ladder = []
 
         for row in range(self.num_rungs):
             rungs = [False] * (self.num_players - 1)
 
-            # 각 행에서 랜덤하게 가로줄 배치 (연속되지 않도록)
+            # 각 행에서 랜덤하게 가로줄 배치 (연속된 가로줄이 생기지 않도록 함)
             positions = list(range(self.num_players - 1))
             random.shuffle(positions)
 
-            # 30-50% 정도의 가로줄 생성
+            # 전체 가능한 위치의 30-50% 정도만 가로줄 생성
             num_rungs_in_row = random.randint(
                 max(1, (self.num_players - 1) // 3),
                 max(2, (self.num_players - 1) // 2)
@@ -77,14 +235,14 @@ class LadderGame:
 
     def trace_path(self, start_col: int) -> Tuple[List[Tuple[int, int]], int]:
         """
-        시작 위치에서 사다리를 따라 내려가는 경로 추적
+        시작 위치에서 사다리를 따라 내려가는 경로를 추적
 
-        Args:
-            start_col: 시작 세로줄 인덱스
+        매개변수:
+            start_col: 시작 세로줄의 인덱스 (0부터 시작)
 
-        Returns:
-            path: (row, col) 튜플의 리스트 (경로)
-            end_col: 최종 도착 세로줄 인덱스
+        반환값:
+            path: 경로상의 모든 위치를 나타내는 (row, col) 튜플 리스트
+            end_col: 최종 도착한 세로줄의 인덱스
         """
         current_col = start_col
         path = [(0, current_col)]
@@ -107,21 +265,31 @@ class LadderGame:
         return path, current_col
 
     def get_result(self, player_index: int) -> str:
-        """특정 플레이어의 결과 반환"""
+        """
+        특정 참가자의 최종 결과(상품)를 반환
+
+        매개변수:
+            player_index: 참가자 인덱스
+
+        반환값:
+            해당 참가자가 도달한 상품(결과)
+        """
         _, end_col = self.trace_path(player_index)
         return self.prizes[end_col]
 
 
-def draw_ladder_ascii(game: LadderGame, highlight_path: List[Tuple[int, int]] = None) -> str:
+def draw_ladder_html(game: LadderGame, highlight_path: List[Tuple[int, int]] = None,
+                     current_position: Tuple[int, int] = None) -> str:
     """
-    ASCII 아트로 사다리 그리기
+    HTML/CSS로 사다리를 그리기 (부드러운 애니메이션 효과 포함)
 
-    Args:
+    매개변수:
         game: LadderGame 인스턴스
-        highlight_path: 강조할 경로 (row, col) 리스트
+        highlight_path: 강조 표시할 경로 [(row, col), ...] 형식의 리스트
+        current_position: 현재 이동 중인 볼의 위치 (row, col)
 
-    Returns:
-        ASCII 아트 문자열
+    반환값:
+        렌더링할 HTML 문자열 (CSS 스타일 포함)
     """
     if highlight_path is None:
         highlight_path = []
@@ -129,65 +297,84 @@ def draw_ladder_ascii(game: LadderGame, highlight_path: List[Tuple[int, int]] = 
     # 경로를 set으로 변환하여 빠른 검색
     path_set = set(highlight_path)
 
-    lines = []
+    # 경로의 시작과 끝 열 찾기
+    start_col = highlight_path[0][1] if highlight_path else -1
+    end_col = highlight_path[-1][1] if highlight_path else -1
 
-    # 참가자 이름 출력 (상단)
-    name_line = "  "
+    html = ['<div class="ladder-container">']
+
+    # 참가자 이름 영역
+    html.append('<div class="ladder-names">')
     for i, name in enumerate(game.player_names):
-        # 각 이름을 8자로 맞춤
-        name_display = name[:7].center(8)
-        name_line += name_display + " "
-    lines.append(name_line)
+        highlight_class = ' highlight' if i == start_col and highlight_path else ''
+        html.append(f'<div class="ladder-name{highlight_class}">{name}</div>')
+    html.append('</div>')
 
-    # 시작 라인
-    start_line = "  "
-    for i in range(game.num_players):
-        if (0, i) in path_set:
-            start_line += "    ●    "
-        else:
-            start_line += "    |    "
-    lines.append(start_line)
+    # 사다리 본체 영역
+    html.append('<div class="ladder-body">')
 
-    # 사다리 본체
-    for row in range(game.num_rungs):
-        # 가로줄
-        rung_line = "  "
-        for col in range(game.num_players):
+    # 각 세로 라인마다 처리
+    ladder_height = 400  # 픽셀 단위
+    rung_spacing = ladder_height / (game.num_rungs + 1)
+
+    for col in range(game.num_players):
+        # 이 세로 라인이 경로에 포함되는지 확인
+        is_in_path = any(pos[1] == col for pos in highlight_path)
+        highlight_class = ' highlight' if is_in_path else ''
+
+        html.append(f'<div class="ladder-vertical{highlight_class}">')
+
+        # 이 세로 라인에서 나가는 가로 라인들 추가
+        for row in range(game.num_rungs):
             if col < game.num_players - 1 and game.ladder[row][col]:
-                # 가로줄이 있음
-                if (row, col) in path_set or (row, col + 1) in path_set:
-                    rung_line += "    ●════"
-                else:
-                    rung_line += "    |────"
-            else:
-                # 가로줄이 없음
-                if (row, col) in path_set:
-                    rung_line += "    ●    "
-                else:
-                    rung_line += "    |    "
-        lines.append(rung_line)
+                # 가로 라인이 있는 경우
+                top_position = (row + 1) * rung_spacing
 
-        # 세로줄
-        vert_line = "  "
-        for col in range(game.num_players):
-            if (row + 1, col) in path_set:
-                vert_line += "    ●    "
-            else:
-                vert_line += "    |    "
-        lines.append(vert_line)
+                # 이 가로 라인이 경로에 포함되는지 확인
+                rung_in_path = (row, col) in path_set or (row, col + 1) in path_set
+                rung_highlight = ' highlight' if rung_in_path else ''
 
-    # 상품 출력 (하단)
-    prize_line = "  "
+                # 가로 라인의 너비 계산 (두 세로 라인 사이의 거리)
+                width_percent = 100 / (game.num_players - 1)
+
+                html.append(
+                    f'<div class="ladder-rung{rung_highlight}" '
+                    f'style="top: {top_position}px; left: 0; width: {width_percent}%;"></div>'
+                )
+
+        html.append('</div>')
+
+    # 현재 위치에 볼 표시 (애니메이션 중일 때)
+    if current_position is not None:
+        row, col = current_position
+        # 볼의 위치 계산
+        col_width = 100 / game.num_players
+        left_percent = col * col_width + col_width / 2
+        top_position = (row + 1) * rung_spacing if row < game.num_rungs else ladder_height
+
+        html.append(
+            f'<div class="ladder-ball" '
+            f'style="left: {left_percent}%; top: {top_position}px;"></div>'
+        )
+
+    html.append('</div>')
+
+    # 상품 영역
+    html.append('<div class="ladder-prizes">')
     for i, prize in enumerate(game.prizes):
-        # 각 상품을 8자로 맞춤
-        prize_display = prize[:7].center(8)
-        prize_line += prize_display + " "
-    lines.append(prize_line)
+        highlight_class = ' highlight' if i == end_col and highlight_path else ''
+        html.append(f'<div class="ladder-prize{highlight_class}">{prize}</div>')
+    html.append('</div>')
 
-    return "\n".join(lines)
+    html.append('</div>')
+
+    return ''.join(html)
 
 
 def main():
+    # CSS 스타일 적용
+    st.markdown(get_ladder_css(), unsafe_allow_html=True)
+
     st.title("🪜 사다리타기 게임")
     st.markdown("---")
 
@@ -314,13 +501,16 @@ def main():
                     # 단계별 애니메이션
                     for step in range(len(path) + 1):
                         current_path = path[:step]
-                        ladder_display = draw_ladder_ascii(game, current_path)
+                        current_pos = path[step - 1] if step > 0 else None
+
+                        # HTML 사다리 렌더링
+                        ladder_html = draw_ladder_html(game, current_path, current_pos)
 
                         with animation_container.container():
-                            st.code(ladder_display, language=None)
+                            st.markdown(ladder_html, unsafe_allow_html=True)
 
                         if step < len(path):
-                            time.sleep(0.15)  # 애니메이션 속도 조절
+                            time.sleep(0.2)  # 애니메이션 속도 조절
 
                     # 최종 결과 표시
                     st.success(f"## 🎊 결과: **{result}**")
@@ -331,8 +521,8 @@ def main():
         if not st.session_state.animation_running:
             st.markdown("---")
             st.subheader("🪜 사다리")
-            ladder_display = draw_ladder_ascii(game)
-            st.code(ladder_display, language=None)
+            ladder_html = draw_ladder_html(game)
+            st.markdown(ladder_html, unsafe_allow_html=True)
 
         # 결과 미리보기 (숨김 처리)
         with st.expander("🔍 결과 미리보기 (스포일러 주의!)"):
