@@ -378,26 +378,27 @@ def main():
     st.title("🪜 사다리타기 게임")
     st.markdown("---")
 
-    # 사이드바: 게임 설정
-    with st.sidebar:
-        st.header("⚙️ 게임 설정")
+    # 메인 영역: 게임 설정
+    st.header("⚙️ 게임 설정")
 
-        # 인원 수 입력
-        num_players = st.number_input(
-            "참가자 수",
-            min_value=2,
-            max_value=100,
-            value=4,
-            step=1,
-            help="2명에서 100명까지 설정 가능합니다."
-        )
+    # 인원 수 입력
+    num_players = st.number_input(
+        "참가자 수",
+        min_value=2,
+        max_value=100,
+        value=4,
+        step=1,
+        help="2명에서 100명까지 설정 가능합니다."
+    )
 
-        st.markdown("---")
+    st.markdown("---")
 
-        # 참가자 이름 입력
-        st.subheader("👥 참가자 이름")
-        player_names = []
-        for i in range(int(num_players)):
+    # 참가자 이름 입력
+    st.subheader("👥 참가자 이름")
+    cols_players = st.columns(min(int(num_players), 4))
+    player_names = []
+    for i in range(int(num_players)):
+        with cols_players[i % 4]:
             name = st.text_input(
                 f"참가자 {i+1}",
                 value=f"참가자{i+1}",
@@ -406,12 +407,14 @@ def main():
             )
             player_names.append(name)
 
-        st.markdown("---")
+    st.markdown("---")
 
-        # 상품/결과 입력
-        st.subheader("🎁 결과 (상품/당첨)")
-        prizes = []
-        for i in range(int(num_players)):
+    # 상품/결과 입력
+    st.subheader("🎁 결과 (상품/당첨)")
+    cols_prizes = st.columns(min(int(num_players), 4))
+    prizes = []
+    for i in range(int(num_players)):
+        with cols_prizes[i % 4]:
             prize = st.text_input(
                 f"결과 {i+1}",
                 value=f"상품{i+1}",
@@ -420,20 +423,24 @@ def main():
             )
             prizes.append(prize)
 
-        st.markdown("---")
+    st.markdown("---")
 
-        # 사다리 가로줄 수 설정
-        num_rungs = st.slider(
-            "사다리 가로줄 수",
-            min_value=10,
-            max_value=30,
-            value=15,
-            step=1,
-            help="사다리의 복잡도를 조절합니다."
-        )
+    # 사다리 가로줄 수 설정
+    num_rungs = st.slider(
+        "사다리 가로줄 수",
+        min_value=10,
+        max_value=30,
+        value=15,
+        step=1,
+        help="사다리의 복잡도를 조절합니다."
+    )
 
-        st.markdown("---")
+    st.markdown("---")
 
+    # 버튼 영역
+    button_col1, button_col2 = st.columns(2)
+
+    with button_col1:
         # 사다리 생성 버튼
         if st.button("🎲 사다리 생성", type="primary", use_container_width=True):
             game = LadderGame(int(num_players), player_names, prizes, num_rungs)
@@ -442,6 +449,7 @@ def main():
             st.session_state.animation_running = False
             st.success("✅ 사다리가 생성되었습니다!")
 
+    with button_col2:
         # 리셋 버튼
         if st.button("🔄 초기화", use_container_width=True):
             st.session_state.ladder_generated = False
@@ -449,10 +457,10 @@ def main():
             st.session_state.animation_running = False
             st.rerun()
 
+    st.markdown("---")
+
     # 메인 영역
     if not st.session_state.ladder_generated:
-        st.info("👈 왼쪽 사이드바에서 게임 설정을 완료한 후 '사다리 생성' 버튼을 눌러주세요.")
-
         # 게임 설명
         st.markdown("## 📖 게임 규칙")
         st.markdown("""
