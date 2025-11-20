@@ -21,11 +21,12 @@ def get_ladder_css():
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding: 30px;
+        padding: 50px;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border-radius: 20px;
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
         margin: 20px auto;
+        max-width: 100%;
     }
 
     /* 참가자 이름 영역 */
@@ -33,16 +34,16 @@ def get_ladder_css():
         display: flex;
         justify-content: space-around;
         width: 100%;
-        margin-bottom: 20px;
+        margin-bottom: 30px;
     }
 
     .ladder-name {
-        font-size: 16px;
+        font-size: 22px;
         font-weight: bold;
         color: #ffffff;
         text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
         text-align: center;
-        padding: 10px 15px;
+        padding: 15px 20px;
         background: rgba(255, 255, 255, 0.2);
         border-radius: 10px;
         backdrop-filter: blur(10px);
@@ -62,50 +63,50 @@ def get_ladder_css():
         justify-content: space-around;
         position: relative;
         width: 100%;
-        min-height: 400px;
+        min-height: 800px;
     }
 
     /* 세로 라인 */
     .ladder-vertical {
         position: relative;
-        width: 4px;
+        width: 8px;
         background: linear-gradient(180deg, #fff 0%, #e0e0e0 100%);
-        border-radius: 2px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        border-radius: 4px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
     }
 
     .ladder-vertical.highlight {
         background: linear-gradient(180deg, #ffd700 0%, #ffed4e 100%);
-        width: 6px;
-        box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+        width: 12px;
+        box-shadow: 0 0 25px rgba(255, 215, 0, 0.9);
         animation: pulse 0.5s ease-in-out;
     }
 
     /* 가로 라인 */
     .ladder-rung {
         position: absolute;
-        height: 4px;
-        background: linear-gradient(90deg, #fff 0%, #e0e0e0 50%, #fff 100%);
-        border-radius: 2px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        height: 8px;
+        background: linear-gradient(90deg, #fff 0%, #f0f0f0 50%, #fff 100%);
+        border-radius: 4px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
         transition: all 0.3s ease;
     }
 
     .ladder-rung.highlight {
         background: linear-gradient(90deg, #ffd700 0%, #ffed4e 50%, #ffd700 100%);
-        height: 6px;
-        box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+        height: 12px;
+        box-shadow: 0 0 25px rgba(255, 215, 0, 0.9);
         animation: glow 0.5s ease-in-out;
     }
 
     /* 이동 포인트 (공) */
     .ladder-ball {
         position: absolute;
-        width: 20px;
-        height: 20px;
+        width: 30px;
+        height: 30px;
         background: radial-gradient(circle at 30% 30%, #ffd700, #ff6b6b);
         border-radius: 50%;
-        box-shadow: 0 0 20px rgba(255, 107, 107, 0.8);
+        box-shadow: 0 0 30px rgba(255, 107, 107, 0.9);
         transform: translate(-50%, -50%);
         animation: bounce 0.3s ease-in-out;
         z-index: 10;
@@ -116,16 +117,16 @@ def get_ladder_css():
         display: flex;
         justify-content: space-around;
         width: 100%;
-        margin-top: 20px;
+        margin-top: 30px;
     }
 
     .ladder-prize {
-        font-size: 16px;
+        font-size: 22px;
         font-weight: bold;
         color: #ffffff;
         text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
         text-align: center;
-        padding: 10px 15px;
+        padding: 15px 20px;
         background: rgba(255, 255, 255, 0.2);
         border-radius: 10px;
         backdrop-filter: blur(10px);
@@ -314,7 +315,7 @@ def draw_ladder_html(game: LadderGame, highlight_path: List[Tuple[int, int]] = N
     html.append('<div class="ladder-body">')
 
     # 각 세로 라인마다 처리
-    ladder_height = 400  # 픽셀 단위
+    ladder_height = 800  # 픽셀 단위
     rung_spacing = ladder_height / (game.num_rungs + 1)
 
     for col in range(game.num_players):
