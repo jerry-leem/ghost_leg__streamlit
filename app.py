@@ -165,21 +165,6 @@ def get_ladder_css():
         40%, 60%, 80% { transform: scale(1.1) rotate(-3deg); }
         100% { transform: scale(1) rotate(0deg); }
     }
-
-    /* 사다리 위 선택 버튼 스타일 */
-    .stButton button {
-        margin-bottom: 0.5rem;
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 100%);
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        transition: all 0.3s ease;
-    }
-
-    .stButton button:hover {
-        background: linear-gradient(135deg, rgba(102, 126, 234, 1) 0%, rgba(118, 75, 162, 1) 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-    }
     </style>
     """
 
@@ -457,10 +442,7 @@ def main():
     st.markdown("---")
 
     # 버튼 영역
-    if st.session_state.ladder_generated:
-        button_col1, button_col2, button_col3 = st.columns(3)
-    else:
-        button_col1, button_col3 = st.columns(2)
+    button_col1, button_col2, button_col3 = st.columns(3)
 
     with button_col1:
         # 사다리 생성 버튼
@@ -471,9 +453,9 @@ def main():
             st.session_state.show_results_table = False
             st.success("✅ 사다리가 생성되었습니다!")
 
-    if st.session_state.ladder_generated:
-        with button_col2:
-            # 전체 결과 보기 버튼
+    with button_col2:
+        # 전체 결과 보기 버튼
+        if st.session_state.ladder_generated:
             if st.button("📊 전체 결과 보기", use_container_width=True):
                 st.session_state.show_results_table = not st.session_state.show_results_table
                 st.rerun()
