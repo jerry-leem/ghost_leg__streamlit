@@ -319,16 +319,18 @@ def draw_ladder_html(game: LadderGame, highlight_path: List[Tuple[int, int]] = N
     ladder_height = 1000  # 픽셀 단위
     rung_spacing = ladder_height / (game.num_rungs + 1)
 
+    # 세로 라인들 먼저 그리기
     for col in range(game.num_players):
         # 이 세로 라인이 경로에 포함되는지 확인
         is_in_path = any(pos[1] == col for pos in highlight_path)
         highlight_class = ' highlight' if is_in_path else ''
 
-        html.append(f'<div class="ladder-vertical{highlight_class}">')
+        html.append(f'<div class="ladder-vertical{highlight_class}"></div>')
 
-        # 이 세로 라인에서 나가는 가로 라인들 추가
-        for row in range(game.num_rungs):
-            if col < game.num_players - 1 and game.ladder[row][col]:
+    # 가로 라인들을 ladder-body 레벨에서 그리기
+    for row in range(game.num_rungs):
+        for col in range(game.num_players - 1):
+            if game.ladder[row][col]:
                 # 가로 라인이 있는 경우
                 top_position = (row + 1) * rung_spacing
 
@@ -336,15 +338,15 @@ def draw_ladder_html(game: LadderGame, highlight_path: List[Tuple[int, int]] = N
                 rung_in_path = (row, col) in path_set or (row, col + 1) in path_set
                 rung_highlight = ' highlight' if rung_in_path else ''
 
-                # 가로 라인의 너비 계산 (두 세로 라인 사이의 거리)
-                width_percent = 100 / (game.num_players - 1)
+                # 가로 라인의 위치와 너비 계산
+                col_width = 100 / game.num_players
+                left_percent = col * col_width + col_width / 2
+                width_percent = col_width
 
                 html.append(
                     f'<div class="ladder-rung{rung_highlight}" '
-                    f'style="top: {top_position}px; left: 0; width: {width_percent}%;"></div>'
+                    f'style="position: absolute; top: {top_position}px; left: {left_percent}%; width: {width_percent}%;"></div>'
                 )
-
-        html.append('</div>')
 
     # 현재 위치에 볼 표시 (애니메이션 중일 때)
     if current_position is not None:
@@ -502,32 +504,28 @@ def main():
                         result = game.prizes[end_col]
 
                         # 결과 표시 영역 - 전체 화면으로 표시
-                        # 기존 컨텐츠를 모두 지우고 애니메이션만 표시
-                        full_screen_container = st.container()
+                        st.markdown("---")
+                        st.subheader(f"🎯 {player_names[i]}님의 결과")
 
-                        with full_screen_container:
-                            st.markdown("---")
-                            st.subheader(f"🎯 {player_names[i]}님의 결과")
+                        # 애니메이션 컨테이너
+                        animation_container = st.empty()
 
-                            # 애니메이션 컨테이너
-                            animation_container = st.empty()
+                        # 단계별 애니메이션
+                        for step in range(len(path) + 1):
+                            current_path = path[:step]
+                            current_pos = path[step - 1] if step > 0 else None
 
-                            # 단계별 애니메이션
-                            for step in range(len(path) + 1):
-                                current_path = path[:step]
-                                current_pos = path[step - 1] if step > 0 else None
+                            # HTML 사다리 렌더링
+                            ladder_html = draw_ladder_html(game, current_path, current_pos)
 
-                                # HTML 사다리 렌더링
-                                ladder_html = draw_ladder_html(game, current_path, current_pos)
+                            # 애니메이션 컨테이너에 직접 출력 (전체 폭 사용)
+                            animation_container.markdown(ladder_html, unsafe_allow_html=True)
 
-                                with animation_container.container():
-                                    st.markdown(ladder_html, unsafe_allow_html=True)
+                            if step < len(path):
+                                time.sleep(0.2)  # 애니메이션 속도 조절
 
-                                if step < len(path):
-                                    time.sleep(0.2)  # 애니메이션 속도 조절
-
-                            # 최종 결과 표시
-                            st.success(f"## 🎊 결과: **{result}**")
+                        # 최종 결과 표시
+                        st.success(f"## 🎊 결과: **{result}**")
 
                         st.session_state.animation_running = False
 
