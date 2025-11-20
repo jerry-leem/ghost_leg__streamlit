@@ -280,8 +280,41 @@ class LadderGame:
         return self.prizes[end_col]
 
 
+def get_player_color(player_index: int) -> Dict[str, str]:
+    """
+    플레이어 인덱스에 따라 고유한 색상 반환
+
+    매개변수:
+        player_index: 플레이어 인덱스
+
+    반환값:
+        색상 정보를 담은 딕셔너리 (primary, secondary, glow)
+    """
+    # 다양한 색상 팔레트 정의 (각 사용자마다 구분되는 색상)
+    color_palette = [
+        {"primary": "#FF6B6B", "secondary": "#FF8E8E", "glow": "255, 107, 107"},  # 빨강
+        {"primary": "#4ECDC4", "secondary": "#7EDDD7", "glow": "78, 205, 196"},  # 청록
+        {"primary": "#FFD93D", "secondary": "#FFE56D", "glow": "255, 217, 61"},  # 노랑
+        {"primary": "#A8E6CF", "secondary": "#C8F0DB", "glow": "168, 230, 207"},  # 민트
+        {"primary": "#FF6FB5", "secondary": "#FF9FCC", "glow": "255, 111, 181"},  # 핑크
+        {"primary": "#95E1D3", "secondary": "#BDEEE4", "glow": "149, 225, 211"},  # 연청록
+        {"primary": "#F38181", "secondary": "#F7A4A4", "glow": "243, 129, 129"},  # 연빨강
+        {"primary": "#AA96DA", "secondary": "#C5B4E3", "glow": "170, 150, 218"},  # 연보라
+        {"primary": "#FCBAD3", "secondary": "#FDD4E5", "glow": "252, 186, 211"},  # 연분홍
+        {"primary": "#A8D8EA", "secondary": "#C8E6F5", "glow": "168, 216, 234"},  # 하늘색
+        {"primary": "#FFA07A", "secondary": "#FFB89A", "glow": "255, 160, 122"},  # 연주황
+        {"primary": "#98D8C8", "secondary": "#B8E8D8", "glow": "152, 216, 200"},  # 에메랄드
+        {"primary": "#DDA0DD", "secondary": "#E8BBE8", "glow": "221, 160, 221"},  # 자주
+        {"primary": "#F7DC6F", "secondary": "#FAE89F", "glow": "247, 220, 111"},  # 금색
+        {"primary": "#85C1E2", "secondary": "#A5D5ED", "glow": "133, 193, 226"},  # 푸른색
+    ]
+
+    # 색상 팔레트를 순환하여 반환
+    return color_palette[player_index % len(color_palette)]
+
+
 def draw_ladder_html(game: LadderGame, highlight_path: List[Tuple[int, int]] = None,
-                     current_position: Tuple[int, int] = None) -> str:
+                     current_position: Tuple[int, int] = None, player_index: int = None) -> str:
     """
     HTML/CSS로 사다리를 그리기 (부드러운 애니메이션 효과 포함)
 
@@ -289,6 +322,7 @@ def draw_ladder_html(game: LadderGame, highlight_path: List[Tuple[int, int]] = N
         game: LadderGame 인스턴스
         highlight_path: 강조 표시할 경로 [(row, col), ...] 형식의 리스트
         current_position: 현재 이동 중인 볼의 위치 (row, col)
+        player_index: 현재 플레이어 인덱스 (색상 구분용)
 
     반환값:
         렌더링할 HTML 문자열 (CSS 스타일 포함)
@@ -303,13 +337,21 @@ def draw_ladder_html(game: LadderGame, highlight_path: List[Tuple[int, int]] = N
     start_col = highlight_path[0][1] if highlight_path else -1
     end_col = highlight_path[-1][1] if highlight_path else -1
 
+    # 플레이어 색상 가져오기
+    player_color = get_player_color(player_index) if player_index is not None else None
+
     html = ['<div class="ladder-container">']
 
     # 참가자 이름 영역
     html.append('<div class="ladder-names">')
     for i, name in enumerate(game.player_names):
-        highlight_class = ' highlight' if i == start_col and highlight_path else ''
-        html.append(f'<div class="ladder-name{highlight_class}">{name}</div>')
+        if i == start_col and highlight_path and player_color:
+            # 사용자별 색상으로 하이라이트
+            html.append(
+                f'<div class="ladder-name highlight" style="background: rgba({player_color["glow"]}, 0.8);">{name}</div>'
+            )
+        else:
+            html.append(f'<div class="ladder-name">{name}</div>')
     html.append('</div>')
 
     # 사다리 본체 영역
@@ -323,9 +365,13 @@ def draw_ladder_html(game: LadderGame, highlight_path: List[Tuple[int, int]] = N
     for col in range(game.num_players):
         # 이 세로 라인이 경로에 포함되는지 확인
         is_in_path = any(pos[1] == col for pos in highlight_path)
-        highlight_class = ' highlight' if is_in_path else ''
-
-        html.append(f'<div class="ladder-vertical{highlight_class}"></div>')
+        if is_in_path and player_color:
+            # 사용자별 색상으로 세로 라인 하이라이트
+            html.append(
+                f'<div class="ladder-vertical highlight" style="background: linear-gradient(180deg, {player_color["primary"]} 0%, {player_color["secondary"]} 100%); box-shadow: 0 0 25px rgba({player_color["glow"]}, 0.9);"></div>'
+            )
+        else:
+            html.append(f'<div class="ladder-vertical"></div>')
 
     # 가로 라인들을 ladder-body 레벨에서 그리기
     for row in range(game.num_rungs):
@@ -336,17 +382,25 @@ def draw_ladder_html(game: LadderGame, highlight_path: List[Tuple[int, int]] = N
 
                 # 이 가로 라인이 경로에 포함되는지 확인
                 rung_in_path = (row, col) in path_set or (row, col + 1) in path_set
-                rung_highlight = ' highlight' if rung_in_path else ''
 
                 # 가로 라인의 위치와 너비 계산
                 col_width = 100 / game.num_players
                 left_percent = col * col_width + col_width / 2
                 width_percent = col_width
 
-                html.append(
-                    f'<div class="ladder-rung{rung_highlight}" '
-                    f'style="position: absolute; top: {top_position}px; left: {left_percent}%; width: {width_percent}%;"></div>'
-                )
+                if rung_in_path and player_color:
+                    # 사용자별 색상으로 가로 라인 하이라이트
+                    html.append(
+                        f'<div class="ladder-rung highlight" '
+                        f'style="position: absolute; top: {top_position}px; left: {left_percent}%; width: {width_percent}%; '
+                        f'background: linear-gradient(90deg, {player_color["primary"]} 0%, {player_color["secondary"]} 50%, {player_color["primary"]} 100%); '
+                        f'box-shadow: 0 0 25px rgba({player_color["glow"]}, 0.9);"></div>'
+                    )
+                else:
+                    html.append(
+                        f'<div class="ladder-rung" '
+                        f'style="position: absolute; top: {top_position}px; left: {left_percent}%; width: {width_percent}%;"></div>'
+                    )
 
     # 현재 위치에 볼 표시 (애니메이션 중일 때)
     if current_position is not None:
@@ -356,18 +410,32 @@ def draw_ladder_html(game: LadderGame, highlight_path: List[Tuple[int, int]] = N
         left_percent = col * col_width + col_width / 2
         top_position = (row + 1) * rung_spacing if row < game.num_rungs else ladder_height
 
-        html.append(
-            f'<div class="ladder-ball" '
-            f'style="left: {left_percent}%; top: {top_position}px;"></div>'
-        )
+        if player_color:
+            # 사용자별 색상으로 볼 표시
+            html.append(
+                f'<div class="ladder-ball" '
+                f'style="left: {left_percent}%; top: {top_position}px; '
+                f'background: radial-gradient(circle at 30% 30%, {player_color["primary"]}, {player_color["secondary"]}); '
+                f'box-shadow: 0 0 30px rgba({player_color["glow"]}, 0.9);"></div>'
+            )
+        else:
+            html.append(
+                f'<div class="ladder-ball" '
+                f'style="left: {left_percent}%; top: {top_position}px;"></div>'
+            )
 
     html.append('</div>')
 
     # 상품 영역
     html.append('<div class="ladder-prizes">')
     for i, prize in enumerate(game.prizes):
-        highlight_class = ' highlight' if i == end_col and highlight_path else ''
-        html.append(f'<div class="ladder-prize{highlight_class}">{prize}</div>')
+        if i == end_col and highlight_path and player_color:
+            # 사용자별 색상으로 하이라이트
+            html.append(
+                f'<div class="ladder-prize highlight" style="background: rgba({player_color["glow"]}, 0.8);">{prize}</div>'
+            )
+        else:
+            html.append(f'<div class="ladder-prize">{prize}</div>')
     html.append('</div>')
 
     html.append('</div>')
@@ -519,8 +587,8 @@ def main():
                 current_path = path[:step]
                 current_pos = path[step - 1] if step > 0 else None
 
-                # HTML 사다리 렌더링
-                ladder_html = draw_ladder_html(game, current_path, current_pos)
+                # HTML 사다리 렌더링 (선택된 플레이어의 색상 적용)
+                ladder_html = draw_ladder_html(game, current_path, current_pos, selected_player)
 
                 # 사다리 컨테이너에 출력
                 ladder_container.markdown(ladder_html, unsafe_allow_html=True)
