@@ -173,8 +173,6 @@ if 'ladder_generated' not in st.session_state:
     st.session_state.ladder_generated = False  # 사다리 생성 여부
 if 'ladder_data' not in st.session_state:
     st.session_state.ladder_data = None  # 사다리 게임 데이터
-if 'animation_running' not in st.session_state:
-    st.session_state.animation_running = False  # 애니메이션 실행 상태
 
 
 class LadderGame:
@@ -450,7 +448,6 @@ def main():
             game = LadderGame(int(num_players), player_names, prizes, num_rungs)
             st.session_state.ladder_data = game
             st.session_state.ladder_generated = True
-            st.session_state.animation_running = False
             st.success("✅ 사다리가 생성되었습니다!")
 
     with button_col2:
@@ -458,7 +455,6 @@ def main():
         if st.button("🔄 초기화", use_container_width=True):
             st.session_state.ladder_generated = False
             st.session_state.ladder_data = None
-            st.session_state.animation_running = False
             st.rerun()
 
     st.markdown("---")
@@ -482,76 +478,52 @@ def main():
     else:
         game = st.session_state.ladder_data
 
-        # 참가자 선택 - 애니메이션 실행 중에는 숨김
-        if not st.session_state.animation_running:
-            st.subheader("👤 참가자 선택")
+        # 참가자 선택
+        st.subheader("👤 참가자 선택")
 
-            cols = st.columns(min(int(num_players), 6))
+        cols = st.columns(min(int(num_players), 6))
 
-            for i in range(int(num_players)):
-                with cols[i % 6]:
-                    if st.button(
-                        f"{player_names[i]}",
-                        key=f"select_{i}",
-                        use_container_width=True,
-                        type="primary"
-                    ):
-                        # 애니메이션 시작
-                        st.session_state.animation_running = True
+        for i in range(int(num_players)):
+            with cols[i % 6]:
+                if st.button(
+                    f"{player_names[i]}",
+                    key=f"select_{i}",
+                    use_container_width=True,
+                    type="primary"
+                ):
+                    # 경로 추적
+                    path, end_col = game.trace_path(i)
+                    result = game.prizes[end_col]
 
-                        # 경로 추적
-                        path, end_col = game.trace_path(i)
-                        result = game.prizes[end_col]
+                    # 결과 표시 영역
+                    st.markdown("---")
+                    st.subheader(f"🎯 {player_names[i]}님의 결과")
 
-                        # 결과 표시 영역 - 전체 화면으로 표시
-                        st.markdown("---")
-                        st.subheader(f"🎯 {player_names[i]}님의 결과")
+                    # 애니메이션 실행
+                    ladder_container = st.empty()
 
-                        # 애니메이션 컨테이너
-                        animation_container = st.empty()
+                    # 단계별 애니메이션
+                    for step in range(len(path) + 1):
+                        current_path = path[:step]
+                        current_pos = path[step - 1] if step > 0 else None
 
-                        # 단계별 애니메이션
-                        for step in range(len(path) + 1):
-                            current_path = path[:step]
-                            current_pos = path[step - 1] if step > 0 else None
+                        # HTML 사다리 렌더링
+                        ladder_html = draw_ladder_html(game, current_path, current_pos)
 
-                            # HTML 사다리 렌더링
-                            ladder_html = draw_ladder_html(game, current_path, current_pos)
+                        # 사다리 컨테이너에 출력
+                        ladder_container.markdown(ladder_html, unsafe_allow_html=True)
 
-                            # 애니메이션 컨테이너에 직접 출력 (전체 폭 사용)
-                            animation_container.markdown(ladder_html, unsafe_allow_html=True)
+                        if step < len(path):
+                            time.sleep(0.2)  # 애니메이션 속도 조절
 
-                            if step < len(path):
-                                time.sleep(0.2)  # 애니메이션 속도 조절
-
-                        # 최종 결과 표시
-                        st.success(f"## 🎊 결과: **{result}**")
-
-                        st.session_state.animation_running = False
+                    # 최종 결과 표시
+                    st.success(f"## 🎊 결과: **{result}**")
 
         # 사다리 표시
-        if not st.session_state.animation_running:
-            st.markdown("---")
-            st.subheader("🪜 사다리")
-            ladder_html = draw_ladder_html(game)
-            st.markdown(ladder_html, unsafe_allow_html=True)
-
-        # 결과 미리보기 (숨김 처리)
-        with st.expander("🔍 결과 미리보기 (스포일러 주의!)"):
-            st.warning("⚠️ 결과를 미리 보시겠습니까? 게임의 재미가 반감될 수 있습니다!")
-
-            if st.checkbox("결과 보기"):
-                results_data = []
-                for i in range(int(num_players)):
-                    _, end_col = game.trace_path(i)
-                    result = game.prizes[end_col]
-                    results_data.append({
-                        "참가자": player_names[i],
-                        "결과": result
-                    })
-
-                df = pd.DataFrame(results_data)
-                st.dataframe(df, use_container_width=True, hide_index=True)
+        st.markdown("---")
+        st.subheader("🪜 사다리")
+        ladder_html = draw_ladder_html(game)
+        st.markdown(ladder_html, unsafe_allow_html=True)
 
 
 if __name__ == "__main__":
