@@ -26,7 +26,8 @@ def get_ladder_css():
         border-radius: 20px;
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
         margin: 20px auto;
-        max-width: 100%;
+        width: 100%;
+        max-width: none;
     }
 
     /* 참가자 이름 영역 */
@@ -63,7 +64,7 @@ def get_ladder_css():
         justify-content: space-around;
         position: relative;
         width: 100%;
-        min-height: 800px;
+        min-height: 1000px;
     }
 
     /* 세로 라인 */
@@ -315,7 +316,7 @@ def draw_ladder_html(game: LadderGame, highlight_path: List[Tuple[int, int]] = N
     html.append('<div class="ladder-body">')
 
     # 각 세로 라인마다 처리
-    ladder_height = 800  # 픽셀 단위
+    ladder_height = 1000  # 픽셀 단위
     rung_spacing = ladder_height / (game.num_rungs + 1)
 
     for col in range(game.num_players):
@@ -479,52 +480,56 @@ def main():
     else:
         game = st.session_state.ladder_data
 
-        # 참가자 선택
-        st.subheader("👤 참가자 선택")
+        # 참가자 선택 - 애니메이션 실행 중에는 숨김
+        if not st.session_state.animation_running:
+            st.subheader("👤 참가자 선택")
 
-        cols = st.columns(min(int(num_players), 6))
+            cols = st.columns(min(int(num_players), 6))
 
-        for i in range(int(num_players)):
-            with cols[i % 6]:
-                if st.button(
-                    f"{player_names[i]}",
-                    key=f"select_{i}",
-                    use_container_width=True,
-                    type="primary" if not st.session_state.animation_running else "secondary",
-                    disabled=st.session_state.animation_running
-                ):
-                    # 애니메이션 시작
-                    st.session_state.animation_running = True
+            for i in range(int(num_players)):
+                with cols[i % 6]:
+                    if st.button(
+                        f"{player_names[i]}",
+                        key=f"select_{i}",
+                        use_container_width=True,
+                        type="primary"
+                    ):
+                        # 애니메이션 시작
+                        st.session_state.animation_running = True
 
-                    # 경로 추적
-                    path, end_col = game.trace_path(i)
-                    result = game.prizes[end_col]
+                        # 경로 추적
+                        path, end_col = game.trace_path(i)
+                        result = game.prizes[end_col]
 
-                    # 결과 표시 영역
-                    st.markdown("---")
-                    st.subheader(f"🎯 {player_names[i]}님의 결과")
+                        # 결과 표시 영역 - 전체 화면으로 표시
+                        # 기존 컨텐츠를 모두 지우고 애니메이션만 표시
+                        full_screen_container = st.container()
 
-                    # 애니메이션 컨테이너
-                    animation_container = st.empty()
+                        with full_screen_container:
+                            st.markdown("---")
+                            st.subheader(f"🎯 {player_names[i]}님의 결과")
 
-                    # 단계별 애니메이션
-                    for step in range(len(path) + 1):
-                        current_path = path[:step]
-                        current_pos = path[step - 1] if step > 0 else None
+                            # 애니메이션 컨테이너
+                            animation_container = st.empty()
 
-                        # HTML 사다리 렌더링
-                        ladder_html = draw_ladder_html(game, current_path, current_pos)
+                            # 단계별 애니메이션
+                            for step in range(len(path) + 1):
+                                current_path = path[:step]
+                                current_pos = path[step - 1] if step > 0 else None
 
-                        with animation_container.container():
-                            st.markdown(ladder_html, unsafe_allow_html=True)
+                                # HTML 사다리 렌더링
+                                ladder_html = draw_ladder_html(game, current_path, current_pos)
 
-                        if step < len(path):
-                            time.sleep(0.2)  # 애니메이션 속도 조절
+                                with animation_container.container():
+                                    st.markdown(ladder_html, unsafe_allow_html=True)
 
-                    # 최종 결과 표시
-                    st.success(f"## 🎊 결과: **{result}**")
+                                if step < len(path):
+                                    time.sleep(0.2)  # 애니메이션 속도 조절
 
-                    st.session_state.animation_running = False
+                            # 최종 결과 표시
+                            st.success(f"## 🎊 결과: **{result}**")
+
+                        st.session_state.animation_running = False
 
         # 사다리 표시
         if not st.session_state.animation_running:
