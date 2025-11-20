@@ -188,6 +188,8 @@ if 'ladder_generated' not in st.session_state:
     st.session_state.ladder_generated = False  # 사다리 생성 여부
 if 'ladder_data' not in st.session_state:
     st.session_state.ladder_data = None  # 사다리 게임 데이터
+if 'show_results_table' not in st.session_state:
+    st.session_state.show_results_table = False  # 결과 테이블 표시 여부
 
 
 class LadderGame:
@@ -455,7 +457,10 @@ def main():
     st.markdown("---")
 
     # 버튼 영역
-    button_col1, button_col2 = st.columns(2)
+    if st.session_state.ladder_generated:
+        button_col1, button_col2, button_col3 = st.columns(3)
+    else:
+        button_col1, button_col3 = st.columns(2)
 
     with button_col1:
         # 사다리 생성 버튼
@@ -463,13 +468,22 @@ def main():
             game = LadderGame(int(num_players), player_names, prizes, num_rungs)
             st.session_state.ladder_data = game
             st.session_state.ladder_generated = True
+            st.session_state.show_results_table = False
             st.success("✅ 사다리가 생성되었습니다!")
 
-    with button_col2:
+    if st.session_state.ladder_generated:
+        with button_col2:
+            # 전체 결과 보기 버튼
+            if st.button("📊 전체 결과 보기", use_container_width=True):
+                st.session_state.show_results_table = not st.session_state.show_results_table
+                st.rerun()
+
+    with button_col3:
         # 리셋 버튼
         if st.button("🔄 초기화", use_container_width=True):
             st.session_state.ladder_generated = False
             st.session_state.ladder_data = None
+            st.session_state.show_results_table = False
             st.rerun()
 
     st.markdown("---")
@@ -538,6 +552,50 @@ def main():
             # 기본 사다리 표시
             ladder_html = draw_ladder_html(game)
             ladder_container.markdown(ladder_html, unsafe_allow_html=True)
+
+        # 전체 결과 테이블 표시
+        if st.session_state.show_results_table:
+            st.markdown("---")
+            st.subheader("📊 전체 결과 요약")
+
+            # 모든 참가자의 결과 계산
+            results_data = []
+            for i, player_name in enumerate(player_names):
+                result = game.get_result(i)
+                results_data.append({
+                    "순번": i + 1,
+                    "참가자": player_name,
+                    "결과": result
+                })
+
+            # DataFrame 생성
+            results_df = pd.DataFrame(results_data)
+
+            # 테이블 표시 (인덱스 숨기기)
+            st.dataframe(
+                results_df,
+                use_container_width=True,
+                hide_index=True,
+                column_config={
+                    "순번": st.column_config.NumberColumn(
+                        "순번",
+                        help="참가자 순번",
+                        format="%d"
+                    ),
+                    "참가자": st.column_config.TextColumn(
+                        "참가자",
+                        help="참가자 이름",
+                        width="medium"
+                    ),
+                    "결과": st.column_config.TextColumn(
+                        "결과",
+                        help="사다리타기 결과",
+                        width="medium"
+                    )
+                }
+            )
+
+            st.info(f"총 {len(results_data)}명의 결과가 표시되었습니다.")
 
 
 if __name__ == "__main__":
