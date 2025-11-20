@@ -165,6 +165,21 @@ def get_ladder_css():
         40%, 60%, 80% { transform: scale(1.1) rotate(-3deg); }
         100% { transform: scale(1) rotate(0deg); }
     }
+
+    /* 사다리 위 선택 버튼 스타일 */
+    .stButton button {
+        margin-bottom: 0.5rem;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 100%);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .stButton button:hover {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 1) 0%, rgba(118, 75, 162, 1) 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    }
     </style>
     """
 
@@ -478,14 +493,15 @@ def main():
     else:
         game = st.session_state.ladder_data
 
-        # 참가자 선택
-        st.subheader("👤 참가자 선택")
+        # 전체 사다리 표시
+        st.markdown("---")
+        st.subheader("🪜 사다리")
 
-        cols = st.columns(min(int(num_players), 6))
-
+        # 사다리 위에 오버레이 형태로 참가자 선택 버튼 배치
+        cols = st.columns(int(num_players))
         selected_player = None
         for i in range(int(num_players)):
-            with cols[i % 6]:
+            with cols[i]:
                 if st.button(
                     f"{player_names[i]}",
                     key=f"select_{i}",
@@ -494,9 +510,6 @@ def main():
                 ):
                     selected_player = i
 
-        # 전체 사다리 표시
-        st.markdown("---")
-        st.subheader("🪜 사다리")
         ladder_container = st.empty()
 
         # 선택된 참가자가 있으면 애니메이션 실행
