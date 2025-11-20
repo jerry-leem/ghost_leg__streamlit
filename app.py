@@ -59,8 +59,6 @@ def get_ladder_css():
 
     /* 사다리 본체 영역 */
     .ladder-body {
-        display: flex;
-        justify-content: space-around;
         position: relative;
         width: 100%;
         min-height: 800px;
@@ -68,11 +66,13 @@ def get_ladder_css():
 
     /* 세로 라인 */
     .ladder-vertical {
-        position: relative;
+        position: absolute;
         width: 8px;
+        height: 100%;
         background: linear-gradient(180deg, #fff 0%, #e0e0e0 100%);
         border-radius: 4px;
         box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+        transform: translateX(-50%);
     }
 
     .ladder-vertical.highlight {
@@ -318,16 +318,22 @@ def draw_ladder_html(game: LadderGame, highlight_path: List[Tuple[int, int]] = N
     ladder_height = 800  # 픽셀 단위
     rung_spacing = ladder_height / (game.num_rungs + 1)
 
+    # 세로 라인들 그리기
     for col in range(game.num_players):
         # 이 세로 라인이 경로에 포함되는지 확인
         is_in_path = any(pos[1] == col for pos in highlight_path)
         highlight_class = ' highlight' if is_in_path else ''
 
-        html.append(f'<div class="ladder-vertical{highlight_class}">')
+        # 세로 라인의 위치 계산
+        col_spacing = 100 / (game.num_players - 1) if game.num_players > 1 else 50
+        left_percent = col * col_spacing if game.num_players > 1 else 50
 
-        # 이 세로 라인에서 나가는 가로 라인들 추가
-        for row in range(game.num_rungs):
-            if col < game.num_players - 1 and game.ladder[row][col]:
+        html.append(f'<div class="ladder-vertical{highlight_class}" style="left: {left_percent}%;"></div>')
+
+    # 가로 라인들을 ladder-body에 직접 추가
+    for row in range(game.num_rungs):
+        for col in range(game.num_players - 1):
+            if game.ladder[row][col]:
                 # 가로 라인이 있는 경우
                 top_position = (row + 1) * rung_spacing
 
@@ -335,22 +341,23 @@ def draw_ladder_html(game: LadderGame, highlight_path: List[Tuple[int, int]] = N
                 rung_in_path = (row, col) in path_set or (row, col + 1) in path_set
                 rung_highlight = ' highlight' if rung_in_path else ''
 
-                # 가로 라인의 너비 계산 (두 세로 라인 사이의 거리)
-                width_percent = 100 / (game.num_players - 1)
+                # 가로 라인의 위치와 너비 계산
+                # 각 세로 라인 사이의 간격
+                col_spacing = 100 / (game.num_players - 1)
+                left_percent = col * col_spacing
+                width_percent = col_spacing
 
                 html.append(
                     f'<div class="ladder-rung{rung_highlight}" '
-                    f'style="top: {top_position}px; left: 0; width: {width_percent}%;"></div>'
+                    f'style="top: {top_position}px; left: {left_percent}%; width: {width_percent}%;"></div>'
                 )
-
-        html.append('</div>')
 
     # 현재 위치에 볼 표시 (애니메이션 중일 때)
     if current_position is not None:
         row, col = current_position
         # 볼의 위치 계산
-        col_width = 100 / game.num_players
-        left_percent = col * col_width + col_width / 2
+        col_spacing = 100 / (game.num_players - 1)
+        left_percent = col * col_spacing
         top_position = (row + 1) * rung_spacing if row < game.num_rungs else ladder_height
 
         html.append(
